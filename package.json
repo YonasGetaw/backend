@@ -4,8 +4,8 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start": "./node_modules/.bin/prisma generate --force && ./node_modules/.bin/tsx src/index.ts",
-    "dev": "./node_modules/.bin/prisma generate --force && ./node_modules/.bin/tsx src/index.ts",
+    "start": "npm run prisma:generate && npx tsx src/index.ts",
+    "dev": "npm run prisma:generate && npx tsx src/index.ts",
     "build": "echo 'Build skipped - Prisma will be generated on start'",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
