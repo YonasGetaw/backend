@@ -4,7 +4,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start": "npx --yes prisma generate && tsx src/index.ts",
+    "start": "npx --yes prisma generate --force && tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "build": "echo 'Build skipped - Prisma will be generated on start'",
     "prisma:generate": "prisma generate",
