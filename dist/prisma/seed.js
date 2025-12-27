@@ -54,6 +54,49 @@ async function main() {
             }
         });
     }
+    // Create sample products
+    const existingProducts = await prisma.product.count();
+    if (existingProducts === 0) {
+        await prisma.product.createMany({
+            data: [
+                {
+                    name: "Premium Smartphone",
+                    description: "Latest flagship smartphone with advanced features and premium build quality.",
+                    priceCents: 50000, // 500 ETB
+                    imageUrl: "/uploads/smartphone.jpg",
+                    isActive: true
+                },
+                {
+                    name: "Wireless Headphones",
+                    description: "High-quality wireless headphones with noise cancellation and long battery life.",
+                    priceCents: 30000, // 300 ETB
+                    imageUrl: "/uploads/headphones.jpg",
+                    isActive: true
+                },
+                {
+                    name: "Smart Watch",
+                    description: "Feature-rich smartwatch with health tracking and connectivity features.",
+                    priceCents: 25000, // 250 ETB
+                    imageUrl: "/uploads/smartwatch.jpg",
+                    isActive: true
+                },
+                {
+                    name: "Laptop Stand",
+                    description: "Ergonomic aluminum laptop stand for improved posture and cooling.",
+                    priceCents: 15000, // 150 ETB
+                    imageUrl: "/uploads/laptop-stand.jpg",
+                    isActive: true
+                },
+                {
+                    name: "USB-C Hub",
+                    description: "Multi-port USB-C hub with all essential connectivity options.",
+                    priceCents: 8000, // 80 ETB
+                    imageUrl: "/uploads/usb-hub.jpg",
+                    isActive: true
+                }
+            ]
+        });
+    }
 }
 main()
     .then(async () => {

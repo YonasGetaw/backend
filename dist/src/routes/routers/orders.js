@@ -1,8 +1,43 @@
 import { Router } from "express";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+import { v4 as uuidv4 } from "uuid";
 import { requireAuth } from "../../middleware/auth.js";
 import { prisma } from "../../db/prisma.js";
 export const ordersRouter = Router();
+// Multer configuration for payment proof uploads
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "..", "..", "..", "uploads");
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = uuidv4();
+        const ext = path.extname(file.originalname);
+        cb(null, `payment-${uniqueSuffix}${ext}`);
+    }
+});
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif|webp/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        else {
+            cb(new Error("Only image files are allowed (jpeg, jpg, png, gif, webp)"));
+        }
+    }
+});
 ordersRouter.get("/mine", requireAuth, async (req, res) => {
     const orders = await prisma.order.findMany({
         where: { userId: req.auth.sub },
@@ -11,29 +46,40 @@ ordersRouter.get("/mine", requireAuth, async (req, res) => {
     });
     return res.json({ orders });
 });
-ordersRouter.post("/", requireAuth, async (req, res) => {
-    const body = z
-        .object({
-        productId: z.string().min(1),
-        paymentMethod: z.enum(["COMMERCIAL_BANK", "TELEBIRR", "CBE_BIRR"]),
-        paymentProofImageUrl: z.string().optional()
-    })
-        .parse(req.body);
-    const product = await prisma.product.findUnique({ where: { id: body.productId } });
-    if (!product || !product.isActive)
-        return res.status(404).json({ message: "Product not found" });
-    const order = await prisma.order.create({
-        data: {
-            userId: req.auth.sub,
-            productId: product.id,
-            paymentMethod: body.paymentMethod,
-            amountCents: product.priceCents,
-            status: "PENDING",
-            paymentProofImageUrl: body.paymentProofImageUrl
-        },
-        include: { product: true }
-    });
-    return res.status(201).json({ order });
+ordersRouter.post("/", upload.single("paymentProof"), requireAuth, async (req, res) => {
+    try {
+        const body = z
+            .object({
+            productId: z.string().min(1),
+            paymentMethod: z.enum(["COMMERCIAL_BANK", "TELEBIRR", "CBE_BIRR"]),
+            paymentProofImageUrl: z.string().optional()
+        })
+            .parse(req.body);
+        const product = await prisma.product.findUnique({ where: { id: body.productId } });
+        if (!product || !product.isActive)
+            return res.status(404).json({ message: "Product not found" });
+        let paymentProofImageUrl = body.paymentProofImageUrl;
+        // If payment proof file was uploaded, use the uploaded file path
+        if (req.file) {
+            paymentProofImageUrl = `/uploads/${req.file.filename}`;
+        }
+        const order = await prisma.order.create({
+            data: {
+                userId: req.auth.sub,
+                productId: product.id,
+                paymentMethod: body.paymentMethod,
+                amountCents: product.priceCents,
+                status: "PENDING",
+                paymentProofImageUrl
+            },
+            include: { product: true }
+        });
+        return res.status(201).json({ order });
+    }
+    catch (error) {
+        console.error("Error creating order:", error);
+        return res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create order" });
+    }
 });
 ordersRouter.patch("/:orderId/status", requireAuth, async (req, res) => {
     if (req.auth.role !== "ADMIN")
