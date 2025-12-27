@@ -4,8 +4,8 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start": "npx --yes prisma generate --force && tsx src/index.ts",
-    "dev": "tsx watch src/index.ts",
+    "start": "npx --yes prisma generate --force && npx tsx src/index.ts",
+    "dev": "npx --yes prisma generate --force && npx tsx src/index.ts",
     "build": "echo 'Build skipped - Prisma will be generated on start'",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -14,7 +14,7 @@
     "lint": "eslint ."
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
