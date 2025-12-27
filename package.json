@@ -4,9 +4,9 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start": "tsx src/index.ts",
+    "start": "npx --yes prisma generate && tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
-    "build": "npm run prisma:generate",
+    "build": "echo 'Build skipped - Prisma will be generated on start'",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
